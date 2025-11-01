@@ -325,6 +325,21 @@ docker run -d \
   ...
 ```
 
+### Mascarar Credenciais em Logs
+
+```javascript
+// No n8n, configure para não logar credenciais
+// Settings → Log → Exclude sensitive data
+// Ou adicione código de sanitização:
+const sanitizedData = {
+  ...data,
+  apiKey: '***REDACTED***'
+};
+console.log(sanitizedData);
+```
+
+**Nota**: As credenciais são corretamente referenciadas como variáveis de ambiente (linha 28), mas garanta que logs de erro também mascarem esses valores.
+
 ## 📚 Recursos
 
 - [n8n Documentation](https://docs.n8n.io/)

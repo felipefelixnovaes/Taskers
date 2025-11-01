@@ -128,6 +128,8 @@ Este diretório contém perfis XML do Tasker que implementam:
 3. Substitua: https://seu-n8n.com/webhook/voz-refeicao
 ```
 
+⚠️ **IMPORTANTE**: O perfil XML contém URL placeholder "https://seu-n8n.com/webhook/voz-refeicao" (linha 71). Este DEVE ser substituído pela URL real do seu n8n antes de usar, caso contrário as requisições falharão. Considere adicionar validação no Tasker para verificar se a URL foi atualizada.
+
 #### 2. Ajustar IDs do Tecnonutri (se necessário)
 
 ```bash

@@ -131,7 +131,7 @@ uiautomatorviewer
 
 3. Capture a tela e identifique os IDs corretos
 
-4. Atualize as constantes em `TecnonutriFillService.kt`:
+4. Atualize as constantes em `TecnonutriFillService.kt` (linhas 27-30):
 ```kotlin
 companion object {
     private const val ID_FAB_ADD = "com.android.systemui:id/fab"
@@ -140,6 +140,8 @@ companion object {
     private const val ID_SAVE_BUTTON = "br.com.tecnonutri:id/save_button"
 }
 ```
+
+**Nota de Código**: IDs hardcoded (linhas 27-30) podem quebrar em atualizações do app. Considere implementar detecção dinâmica de elementos para maior robustez.
 
 ### Adicionar Delays Personalizados
 
@@ -154,9 +156,10 @@ handler.postDelayed({
 ## ⚠️ Limitações
 
 - **Requer Acessibilidade**: O usuário deve conceder permissões de acessibilidade
-- **Dependente de UI**: Quebra se o Tecnonutri mudar layout drasticamente
+- **Dependente de UI**: Quebra se o Tecnonutri mudar layout drasticamente (IDs hardcoded nas linhas 27-30)
 - **Sequencial**: Processa um item por vez (não paralelo)
 - **Sem validação**: Não verifica se alimento foi encontrado corretamente
+- **Callback Hell**: Usa nested postDelayed (linhas 134-139) - refatoração com coroutines recomendada para produção
 
 ## 🔐 Segurança
 
