@@ -1,0 +1,233 @@
+{
+  "name": "Fluxo de Refeição - Voz para JSON",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "voz-refeicao",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-entrada",
+      "name": "Webhook - Entrada de Voz",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "voz-refeicao"
+    },
+    {
+      "parameters": {
+        "url": "https://api.openai.com/v1/audio/transcriptions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.OPENAI_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{ $json.audio }}"
+            },
+            {
+              "name": "model",
+              "value": "whisper-1"
+            },
+            {
+              "name": "language",
+              "value": "pt"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "whisper-transcricao",
+      "name": "Whisper - Transcrição",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.OPENAI_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"model\": \"gpt-4\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Você é um assistente que converte descrições de refeições em JSON estruturado. Extraia: tipo de refeição (café da manhã, almoço, jantar, lanche), alimentos com quantidade e unidade. Retorne apenas JSON válido no formato: {\\\"refeicao\\\": \\\"tipo\\\", \\\"itens\\\": [{\\\"alimento\\\": \\\"nome\\\", \\\"quantidade\\\": numero, \\\"unidade\\\": \\\"g/ml/porção\\\"}], \\\"dataHora\\\": \\\"ISO8601\\\", \\\"observacao\\\": \\\"texto\\\"}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json.text }}\"\n    }\n  ],\n  \"temperature\": 0.3\n}",
+        "options": {}
+      },
+      "id": "gpt-parser",
+      "name": "GPT - Parser JSON",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extrai o JSON da resposta do GPT\nconst gptResponse = $input.first().json;\nconst content = gptResponse.choices[0].message.content;\n\n// Parse do JSON\nlet mealData;\ntry {\n  // Remove markdown code blocks se existirem\n  const jsonMatch = content.match(/```json\\n([\\s\\S]*?)\\n```/) || content.match(/```([\\s\\S]*?)```/);\n  const jsonStr = jsonMatch ? jsonMatch[1] : content;\n  mealData = JSON.parse(jsonStr);\n} catch (error) {\n  // Fallback: tenta parsear direto\n  mealData = JSON.parse(content);\n}\n\n// Adiciona timestamp se não existir\nif (!mealData.dataHora) {\n  mealData.dataHora = new Date().toISOString();\n}\n\nreturn { json: mealData };"
+      },
+      "id": "processar-json",
+      "name": "Processar JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://joinjoaomgcd.appspot.com/_ah/api/messaging/v1/sendPush",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.JOIN_API_KEY }}"
+            },
+            {
+              "name": "deviceId",
+              "value": "={{ $env.JOIN_DEVICE_ID }}"
+            },
+            {
+              "name": "title",
+              "value": "Nova Refeição"
+            },
+            {
+              "name": "text",
+              "value": "Refeição processada pelo assistente IA"
+            },
+            {
+              "name": "smallicon",
+              "value": "https://cdn-icons-png.flaticon.com/512/857/857681.png"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "enviar-join",
+      "name": "Enviar para Join (Android)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Refeição enviada para o dispositivo', data: $json }) }}"
+      },
+      "id": "resposta-webhook",
+      "name": "Resposta Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "mode": "logToConsole",
+        "message": "={{ 'Erro ao processar: ' + $json.error }}"
+      },
+      "id": "log-erro",
+      "name": "Log de Erro",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [650, 500]
+    }
+  ],
+  "connections": {
+    "Webhook - Entrada de Voz": {
+      "main": [
+        [
+          {
+            "node": "Whisper - Transcrição",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Whisper - Transcrição": {
+      "main": [
+        [
+          {
+            "node": "GPT - Parser JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT - Parser JSON": {
+      "main": [
+        [
+          {
+            "node": "Processar JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Processar JSON": {
+      "main": [
+        [
+          {
+            "node": "Enviar para Join (Android)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar para Join (Android)": {
+      "main": [
+        [
+          {
+            "node": "Resposta Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "Automação",
+      "id": "automation"
+    },
+    {
+      "name": "IA",
+      "id": "ai"
+    }
+  ],
+  "meta": {
+    "instanceId": "taskers-meal-assistant"
+  }
+}
