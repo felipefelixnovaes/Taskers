@@ -1,0 +1,47 @@
+# Environment variables and secrets
+.env
+.env.local
+config/secrets.json
+*.key
+
+# Node modules (if using n8n locally)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build artifacts
+*.apk
+*.aab
+build/
+dist/
+*.jar
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Android specific
+local.properties
+*.iml
+.gradle/
+.cxx/
+captures/
+
+# Backup files
+*.bak
+*.backup
+*~.xml

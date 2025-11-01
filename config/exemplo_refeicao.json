@@ -1,0 +1,27 @@
+{
+  "refeicao": "almoco",
+  "itens": [
+    {
+      "alimento": "frango grelhado",
+      "quantidade": 150,
+      "unidade": "g"
+    },
+    {
+      "alimento": "arroz branco",
+      "quantidade": 120,
+      "unidade": "g"
+    },
+    {
+      "alimento": "feijão preto",
+      "quantidade": 80,
+      "unidade": "g"
+    },
+    {
+      "alimento": "salada verde",
+      "quantidade": 1,
+      "unidade": "porção"
+    }
+  ],
+  "observacao": "refeição balanceada e sem frituras",
+  "dataHora": "2025-11-01T13:15:00-03:00"
+}
